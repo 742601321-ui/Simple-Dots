@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Two Dots 风格小游戏</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="app">
+        <header class="topbar">
+            <div class="score">
+                <span>分数</span>
+                <strong id="score">0</strong>
+            </div>
+            <div class="moves">
+                <span>步数</span>
+                <strong id="moves-left">20</strong>
+            </div>
+            <div class="controls">
+                <button id="btn-hint" class="btn">提示</button>
+                <button id="btn-reshuffle" class="btn">重排</button>
+                <button id="btn-restart" class="btn">重开</button>
+                <button id="btn-music" class="btn">🎵</button>
+            </div>
+        </header>
+
+        <section class="goals" id="goals">
+        </section>
+
+        <main class="board-wrap">
+            <canvas id="game-canvas" width="400" height="600"></canvas>
+            <div id="overlay" class="overlay hidden">
+                <div class="modal">
+                    <h2 id="overlay-title">游戏结束</h2>
+                    <p id="overlay-desc">点击重开再试一次！</p>
+                    <button id="overlay-restart" class="btn btn-primary">再来一局</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- 开始弹窗 -->
+        <div id="start-overlay" class="start-overlay">
+            <div class="start-modal">
+                <h1 class="game-title">Simple Dots</h1>
+                <p class="game-subtitle">生活很累，但希望你可以在这里放松一下~</p>
+                <button id="start-game-btn" class="btn btn-primary btn-large">开始游戏</button>
+            </div>
+        </div>
+
+        <footer class="bottombar">
+            <div class="hint" id="hint">连接至少3个相同颜色的点，只能上下左右相邻连接，形成回路可清除该色全部点</div>
+            <div class="level-info">
+                <span>关卡 <strong id="current-level">1</strong></span>
+                <span>目标: <strong id="level-target">消除30个圆点</strong></span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- 音频元素 -->
+    <audio id="bgm" loop>
+        <source src="music/bgm.mp3" type="audio/mpeg">
+        您的浏览器不支持音频播放。
+    </audio>
+
+    <script src="main.js"></script>
+</body>
+</html>
+
+
