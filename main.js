@@ -589,25 +589,13 @@
     // 输入处理
     function getPointer(e) {
         const rect = canvas.getBoundingClientRect();
-        let clientX, clientY;
-        
-        // 处理触摸事件
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else if (e.changedTouches && e.changedTouches.length > 0) {
-            // 处理 touchend 事件
-            clientX = e.changedTouches[0].clientX;
-            clientY = e.changedTouches[0].clientY;
-        } else {
-            // 处理鼠标事件
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-        
+        const point = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+        const clientX = point.clientX;
+        const clientY = point.clientY;
+        // 返回 CSS 像素坐标，保持与 offsetX/offsetY/cellSize 一致
         return {
-            x: (clientX - rect.left) * (canvas.width / rect.width),
-            y: (clientY - rect.top) * (canvas.height / rect.height)
+            x: clientX - rect.left,
+            y: clientY - rect.top
         };
     }
 
