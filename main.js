@@ -32,7 +32,7 @@
     // 动态尺寸（高清渲染，保持圆形不失真）
     const logicalWidth = canvas.width;
     const logicalHeight = canvas.height;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2); // 限制最大DPR为2，避免性能问题
     canvas.width = Math.round(logicalWidth * dpr);
     canvas.height = Math.round(logicalHeight * dpr);
     canvas.style.width = logicalWidth + 'px';
@@ -99,21 +99,33 @@
         if (bgmAudio) {
             bgmAudio.volume = 0.3; // 设置背景音乐音量
             bgmAudio.loop = true;
+            bgmAudio.preload = 'auto';
+            
+            // 移动端音频初始化
+            bgmAudio.addEventListener('canplaythrough', function() {
+                console.log('音频已准备就绪');
+            });
+            
+            bgmAudio.addEventListener('error', function(e) {
+                console.log('音频加载失败:', e);
+                bgmEnabled = false;
+                if (btnMusic) btnMusic.textContent = '🔇';
+            });
         }
     }
     
     function startBGM() {
         if (bgmAudio && bgmEnabled) {
-            bgmAudio.play().catch(e => {
-                console.log('背景音乐播放失败:', e);
-                // 用户交互后重试
-                document.addEventListener('click', function retryBGM() {
-                    if (bgmAudio && bgmEnabled) {
-                        bgmAudio.play().catch(() => {});
-                    }
-                    document.removeEventListener('click', retryBGM);
-                }, { once: true });
-            });
+            // 移动端需要用户交互才能播放音频
+            const playPromise = bgmAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    console.log('背景音乐播放失败:', e);
+                    // 移动端通常需要用户交互才能播放音频
+                    bgmEnabled = false;
+                    if (btnMusic) btnMusic.textContent = '🔇';
+                });
+            }
         }
     }
     
@@ -181,8 +193,10 @@
         if (startOverlay) {
             startOverlay.style.display = 'none';
         }
-        // 开始播放背景音乐
-        startBGM();
+        // 在用户交互后尝试播放背景音乐
+        if (bgmEnabled) {
+            startBGM();
+        }
     }
     
     function resetGame() {
@@ -569,11 +583,11 @@
     // 输入处理
     function getPointer(e) {
         const rect = canvas.getBoundingClientRect();
-        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
-        const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+        const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+        const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
         return {
-            x: (clientX - rect.left) * (canvas.width / rect.width),
-            y: (clientY - rect.top) * (canvas.height / rect.height)
+            x: (clientX - rect.left) * (logicalWidth / rect.width),
+            y: (clientY - rect.top) * (logicalHeight / rect.height)
         };
     }
 
@@ -837,9 +851,28 @@
     canvas.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
-    canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onPointerDown(e); }, { passive: false });
-    canvas.addEventListener('touchmove', function(e){ e.preventDefault(); onPointerMove(e); }, { passive: false });
-    window.addEventListener('touchend', function(e){ e.preventDefault(); onPointerUp(e); }, { passive: false });
+    // 触摸事件处理
+    canvas.addEventListener('touchstart', function(e){ 
+        e.preventDefault(); 
+        onPointerDown(e); 
+    }, { passive: false });
+    
+    canvas.addEventListener('touchmove', function(e){ 
+        e.preventDefault(); 
+        onPointerMove(e); 
+    }, { passive: false });
+    
+    canvas.addEventListener('touchend', function(e){ 
+        e.preventDefault(); 
+        onPointerUp(e); 
+    }, { passive: false });
+    
+    // 防止页面滚动
+    document.addEventListener('touchmove', function(e) {
+        if (e.target === canvas) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 
     btnRestart.addEventListener('click', resetGame);
     overlayRestart.addEventListener('click', resetGame);

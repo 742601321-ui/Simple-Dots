@@ -13,7 +13,9 @@ body {
 }
 
 .app {
-    width: 420px;
+    width: 100%;
+    max-width: 420px;
+    padding: 0 10px;
 }
 
 .topbar, .bottombar {
@@ -44,7 +46,8 @@ body {
 
 .board-wrap {
     position: relative;
-    width: 400px;
+    width: 100%;
+    max-width: 400px;
     height: 600px;
     border-radius: 16px;
     overflow: hidden;
@@ -153,5 +156,86 @@ body {
     opacity: .8; 
 }
 .level-info strong { color: #FFD700; }
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+    .app {
+        padding: 0 5px;
+    }
+    
+    .topbar, .bottombar {
+        padding: 8px 4px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .controls {
+        gap: 6px;
+    }
+    
+    .btn {
+        padding: 10px 12px;
+        font-size: 14px;
+        min-height: 44px; /* 确保触摸目标足够大 */
+    }
+    
+    .board-wrap {
+        height: 500px;
+        margin: 4px auto;
+    }
+    
+    .goals {
+        gap: 6px;
+        padding: 0 4px 4px;
+    }
+    
+    .goal-item {
+        padding: 4px 6px;
+    }
+    
+    .goal-dot {
+        width: 12px;
+        height: 12px;
+    }
+    
+    .goal-count {
+        font-size: 12px;
+    }
+    
+    .score strong, .level strong {
+        font-size: 18px;
+    }
+    
+    .hint {
+        font-size: 11px;
+        margin-bottom: 6px;
+    }
+    
+    .level-info {
+        font-size: 11px;
+        gap: 12px;
+    }
+    
+    .start-modal {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .game-title {
+        font-size: 36px;
+        margin-bottom: 15px;
+    }
+    
+    .game-subtitle {
+        font-size: 14px;
+        margin-bottom: 25px;
+    }
+    
+    .btn-large {
+        padding: 14px 28px;
+        font-size: 16px;
+        min-width: 140px;
+    }
+}
 
 
