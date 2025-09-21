@@ -300,10 +300,23 @@
     }
 
     function posToCell(x, y) {
+        // 确保坐标在有效范围内
+        if (x < offsetX || y < offsetY) return null;
+        
         const col = Math.floor((x - offsetX) / cellSize);
         const row = Math.floor((y - offsetY) / cellSize);
+        
         // 严格检查边界，确保不超出网格范围
         if (col < 0 || col >= BOARD_COLS || row < 0 || row >= BOARD_ROWS) return null;
+        
+        // 检查是否在圆点范围内（增加触摸容错）
+        const cellCenterX = offsetX + col * cellSize + cellSize / 2;
+        const cellCenterY = offsetY + row * cellSize + cellSize / 2;
+        const distance = Math.sqrt((x - cellCenterX) ** 2 + (y - cellCenterY) ** 2);
+        
+        // 如果距离圆点中心太远，返回null（增加触摸精度）
+        if (distance > cellSize * 0.6) return null;
+        
         return { col, row };
     }
 
@@ -579,8 +592,22 @@
     // 输入处理
     function getPointer(e) {
         const rect = canvas.getBoundingClientRect();
-        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
-        const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+        let clientX, clientY;
+        
+        // 处理触摸事件
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else if (e.changedTouches && e.changedTouches.length > 0) {
+            // 处理 touchend 事件
+            clientX = e.changedTouches[0].clientX;
+            clientY = e.changedTouches[0].clientY;
+        } else {
+            // 处理鼠标事件
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        
         return {
             x: (clientX - rect.left) * (canvas.width / rect.width),
             y: (clientY - rect.top) * (canvas.height / rect.height)
@@ -592,10 +619,25 @@
         
         const p = getPointer(e);
         const cell = posToCell(p.x, p.y);
-        if (!cell) return;
+        
+        // 添加触摸反馈
+        if (e.type === 'touchstart') {
+            // 播放触摸音效
+            playBeep(800, 0.05, 0.03);
+        }
+        
+        if (!cell) {
+            // 调试信息：点击位置无效
+            console.log('点击位置无效:', p.x, p.y, 'offset:', offsetX, offsetY, 'cellSize:', cellSize);
+            return;
+        }
+        
         const { row, col } = cell;
         const dot = grid[row][col];
-        if (!dot) return;
+        if (!dot) {
+            console.log('该位置没有圆点:', row, col);
+            return;
+        }
         
         // 如果在引导中，检查是否点击了正确的起始点
         if (tutorialActive && tutorialPath.length > 0) {
@@ -847,9 +889,31 @@
     canvas.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
-    canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onPointerDown(e); }, { passive: false });
-    canvas.addEventListener('touchmove', function(e){ e.preventDefault(); onPointerMove(e); }, { passive: false });
-    window.addEventListener('touchend', function(e){ e.preventDefault(); onPointerUp(e); }, { passive: false });
+    // 触摸事件绑定 - 优化移动端支持
+    canvas.addEventListener('touchstart', function(e){ 
+        e.preventDefault(); 
+        e.stopPropagation();
+        onPointerDown(e); 
+    }, { passive: false });
+    
+    canvas.addEventListener('touchmove', function(e){ 
+        e.preventDefault(); 
+        e.stopPropagation();
+        onPointerMove(e); 
+    }, { passive: false });
+    
+    window.addEventListener('touchend', function(e){ 
+        e.preventDefault(); 
+        e.stopPropagation();
+        onPointerUp(e); 
+    }, { passive: false });
+    
+    // 添加触摸取消事件
+    window.addEventListener('touchcancel', function(e){ 
+        e.preventDefault(); 
+        e.stopPropagation();
+        onPointerUp(e); 
+    }, { passive: false });
 
     btnRestart.addEventListener('click', resetGame);
     overlayRestart.addEventListener('click', resetGame);

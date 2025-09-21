@@ -40,6 +40,8 @@ body {
     border-radius: 10px;
     cursor: pointer;
     transition: transform .06s ease, background .2s ease;
+    touch-action: manipulation; /* 优化触摸响应 */
+    -webkit-tap-highlight-color: transparent; /* 移除触摸高亮 */
 }
 .btn:hover { background: #383d6d; }
 .btn:active { transform: scale(0.98); }
@@ -77,6 +79,10 @@ body {
     display: block;
     width: 100%;
     height: 100%;
+    touch-action: none; /* 禁用默认触摸行为 */
+    -webkit-touch-callout: none; /* 禁用长按菜单 */
+    -webkit-user-select: none; /* 禁用文本选择 */
+    user-select: none;
 }
 
 .overlay {
