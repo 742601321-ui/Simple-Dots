@@ -30,16 +30,36 @@
     const startGameBtn = document.getElementById('start-game-btn');
 
     // 动态尺寸（高清渲染，保持圆形不失真）
-    const logicalWidth = canvas.width;
-    const logicalHeight = canvas.height;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2); // 限制最大DPR为2，避免性能问题
-    canvas.width = Math.round(logicalWidth * dpr);
-    canvas.height = Math.round(logicalHeight * dpr);
-    canvas.style.width = logicalWidth + 'px';
-    canvas.style.height = logicalHeight + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const width = logicalWidth;
-    const height = logicalHeight;
+    function resizeCanvas() {
+        const container = canvas.parentElement;
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // 计算合适的Canvas尺寸
+        const aspectRatio = 360 / 540; // 原始宽高比
+        let logicalWidth, logicalHeight;
+        
+        if (containerWidth / containerHeight > aspectRatio) {
+            // 容器太宽，以高度为准
+            logicalHeight = Math.min(containerHeight - 20, 540);
+            logicalWidth = logicalHeight * aspectRatio;
+        } else {
+            // 容器太高，以宽度为准
+            logicalWidth = Math.min(containerWidth - 20, 360);
+            logicalHeight = logicalWidth / aspectRatio;
+        }
+        
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.round(logicalWidth * dpr);
+        canvas.height = Math.round(logicalHeight * dpr);
+        canvas.style.width = logicalWidth + 'px';
+        canvas.style.height = logicalHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+        return { width: logicalWidth, height: logicalHeight };
+    }
+    
+    const { width, height } = resizeCanvas();
     
     // 确保网格完全在画布内
     const gridW = width - CELL_PADDING * 2;
@@ -1368,6 +1388,29 @@
         }
         return 0;
     }
+
+    // 窗口大小变化时重新调整Canvas
+    window.addEventListener('resize', function() {
+        const newSize = resizeCanvas();
+        // 重新计算网格参数
+        const gridW = newSize.width - CELL_PADDING * 2;
+        const gridH = newSize.height - CELL_PADDING * 2;
+        const newCellSize = Math.min(Math.floor(gridW / BOARD_COLS), Math.floor(gridH / BOARD_ROWS));
+        const newOffsetX = Math.floor((newSize.width - newCellSize * BOARD_COLS) / 2);
+        const newOffsetY = Math.floor((newSize.height - newCellSize * BOARD_ROWS) / 2);
+        
+        // 更新全局变量
+        Object.assign(window, {
+            width: newSize.width,
+            height: newSize.height,
+            cellSize: newCellSize,
+            offsetX: newOffsetX,
+            offsetY: newOffsetY,
+            dotRadius: Math.floor(newCellSize * 0.28)
+        });
+        
+        render();
+    });
 
     // 启动
     loadProgress();
