@@ -300,23 +300,20 @@
     }
 
     function posToCell(x, y) {
-        // 确保坐标在有效范围内
-        if (x < offsetX || y < offsetY) return null;
-        
+        // 最简化的触摸检测逻辑
         const col = Math.floor((x - offsetX) / cellSize);
         const row = Math.floor((y - offsetY) / cellSize);
         
-        // 严格检查边界，确保不超出网格范围
-        if (col < 0 || col >= BOARD_COLS || row < 0 || row >= BOARD_ROWS) return null;
+        console.log('计算格子位置:', 'col:', col, 'row:', row, 'from coords:', x, y);
         
-        // 检查是否在圆点范围内（增加触摸容错）
-        const cellCenterX = offsetX + col * cellSize + cellSize / 2;
-        const cellCenterY = offsetY + row * cellSize + cellSize / 2;
-        const distance = Math.sqrt((x - cellCenterX) ** 2 + (y - cellCenterY) ** 2);
+        // 检查边界 - 放宽限制
+        if (col < 0 || col >= BOARD_COLS || row < 0 || row >= BOARD_ROWS) {
+            console.log('超出边界:', 'col:', col, 'row:', row, 'max col:', BOARD_COLS, 'max row:', BOARD_ROWS);
+            return null;
+        }
         
-        // 如果距离圆点中心太远，返回null（增加触摸精度）
-        if (distance > cellSize * 0.6) return null;
-        
+        // 直接返回，不做额外检查
+        console.log('返回有效格子:', col, row);
         return { col, row };
     }
 
@@ -615,10 +612,19 @@
     }
 
     function onPointerDown(e) {
-        if (movesLeft <= 0) return;
+        console.log('触摸事件触发:', e.type, 'movesLeft:', movesLeft);
+        
+        if (movesLeft <= 0) {
+            console.log('步数已用完，忽略点击');
+            return;
+        }
         
         const p = getPointer(e);
+        console.log('触摸坐标:', p.x, p.y, 'canvas尺寸:', canvas.width, canvas.height);
+        console.log('网格参数:', 'offsetX:', offsetX, 'offsetY:', offsetY, 'cellSize:', cellSize);
+        
         const cell = posToCell(p.x, p.y);
+        console.log('检测到的格子:', cell);
         
         // 添加触摸反馈
         if (e.type === 'touchstart') {
@@ -627,15 +633,16 @@
         }
         
         if (!cell) {
-            // 调试信息：点击位置无效
-            console.log('点击位置无效:', p.x, p.y, 'offset:', offsetX, offsetY, 'cellSize:', cellSize);
+            console.log('点击位置无效，坐标超出范围');
             return;
         }
         
         const { row, col } = cell;
         const dot = grid[row][col];
+        console.log('格子内容:', row, col, dot);
+        
         if (!dot) {
-            console.log('该位置没有圆点:', row, col);
+            console.log('该位置没有圆点');
             return;
         }
         
@@ -891,6 +898,7 @@
 
     // 触摸事件绑定 - 优化移动端支持
     canvas.addEventListener('touchstart', function(e){ 
+        console.log('Canvas touchstart 事件触发');
         e.preventDefault(); 
         e.stopPropagation();
         onPointerDown(e); 
@@ -1459,12 +1467,40 @@
         setTimeout(handleResize, 100);
     });
 
+    // 添加网格参数测试函数
+    function testGridParams() {
+        console.log('=== 网格参数测试 ===');
+        console.log('BOARD_COLS:', BOARD_COLS, 'BOARD_ROWS:', BOARD_ROWS);
+        console.log('Canvas尺寸:', canvas.width, 'x', canvas.height);
+        console.log('Canvas样式尺寸:', canvas.style.width, 'x', canvas.style.height);
+        console.log('网格参数:', 'offsetX:', offsetX, 'offsetY:', offsetY, 'cellSize:', cellSize);
+        console.log('网格总尺寸:', cellSize * BOARD_COLS, 'x', cellSize * BOARD_ROWS);
+        console.log('网格起始位置:', offsetX, offsetY);
+        console.log('网格结束位置:', offsetX + cellSize * BOARD_COLS, offsetY + cellSize * BOARD_ROWS);
+        
+        // 测试几个关键位置的检测
+        const testPoints = [
+            { x: offsetX + cellSize * 0.5, y: offsetY + cellSize * 0.5, desc: '第一个格子中心' },
+            { x: offsetX + cellSize * 2.5, y: offsetY + cellSize * 3.5, desc: '中间格子中心' },
+            { x: offsetX + cellSize * 4.5, y: offsetY + cellSize * 7.5, desc: '最后一个格子中心' }
+        ];
+        
+        testPoints.forEach(point => {
+            const cell = posToCell(point.x, point.y);
+            console.log('测试点:', point.desc, '坐标:', point.x, point.y, '结果:', cell);
+        });
+        console.log('=== 测试结束 ===');
+    }
+    
     // 启动
     loadProgress();
     loadTutorialProgress();
     initBGM();
     resetGame();
     requestAnimationFrame(tick);
+    
+    // 延迟执行测试，确保网格已初始化
+    setTimeout(testGridParams, 1000);
     
     // 显示开始弹窗
     if (startOverlay) {
