@@ -30,44 +30,34 @@
     const startGameBtn = document.getElementById('start-game-btn');
 
     // 动态尺寸（高清渲染，保持圆形不失真）
-    function resizeCanvas() {
-        const container = canvas.parentElement;
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
-        
-        // 计算合适的Canvas尺寸
-        const aspectRatio = 360 / 540; // 原始宽高比
-        let logicalWidth, logicalHeight;
-        
-        if (containerWidth / containerHeight > aspectRatio) {
-            // 容器太宽，以高度为准
-            logicalHeight = Math.min(containerHeight - 20, 540);
-            logicalWidth = logicalHeight * aspectRatio;
-        } else {
-            // 容器太高，以宽度为准
-            logicalWidth = Math.min(containerWidth - 20, 360);
-            logicalHeight = logicalWidth / aspectRatio;
-        }
-        
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = Math.round(logicalWidth * dpr);
-        canvas.height = Math.round(logicalHeight * dpr);
-        canvas.style.width = logicalWidth + 'px';
-        canvas.style.height = logicalHeight + 'px';
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        
-        return { width: logicalWidth, height: logicalHeight };
-    }
+    const logicalWidth = canvas.width;
+    const logicalHeight = canvas.height;
+    const dpr = window.devicePixelRatio || 1;
     
-    const { width, height } = resizeCanvas();
+    // 检测移动端并调整canvas尺寸
+    const isMobile = window.innerWidth <= 720;
+    const adjustedWidth = isMobile ? Math.min(logicalWidth, window.innerWidth - 20) : logicalWidth;
+    // 针对720*1280竖屏优化，确保8行网格能够完整显示
+    const adjustedHeight = isMobile ? Math.min(logicalHeight, window.innerHeight * 0.75) : logicalHeight;
+    
+    canvas.width = Math.round(adjustedWidth * dpr);
+    canvas.height = Math.round(adjustedHeight * dpr);
+    canvas.style.width = adjustedWidth + 'px';
+    canvas.style.height = adjustedHeight + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    let width = adjustedWidth;
+    let height = adjustedHeight;
     
     // 确保网格完全在画布内
-    const gridW = width - CELL_PADDING * 2;
-    const gridH = height - CELL_PADDING * 2;
-    const cellSize = Math.min(Math.floor(gridW / BOARD_COLS), Math.floor(gridH / BOARD_ROWS));
-    const offsetX = Math.floor((width - cellSize * BOARD_COLS) / 2);
-    const offsetY = Math.floor((height - cellSize * BOARD_ROWS) / 2);
-    const dotRadius = Math.floor(cellSize * 0.28);
+    let gridW = width - CELL_PADDING * 2;
+    let gridH = height - CELL_PADDING * 2;
+    // 确保8行网格能够完整显示，调整cellSize计算
+    let cellSize = Math.min(Math.floor(gridW / BOARD_COLS), Math.floor(gridH / BOARD_ROWS));
+    // 如果计算出的cellSize太小，使用最小尺寸
+    cellSize = Math.max(cellSize, 40); // 最小40px确保可见性
+    let offsetX = Math.floor((width - cellSize * BOARD_COLS) / 2);
+    let offsetY = Math.floor((height - cellSize * BOARD_ROWS) / 2);
+    let dotRadius = Math.floor(cellSize * 0.28);
 
     // 状态
     let grid = []; // grid[row][col] -> { colorIndex }
@@ -119,33 +109,21 @@
         if (bgmAudio) {
             bgmAudio.volume = 0.3; // 设置背景音乐音量
             bgmAudio.loop = true;
-            bgmAudio.preload = 'auto';
-            
-            // 移动端音频初始化
-            bgmAudio.addEventListener('canplaythrough', function() {
-                console.log('音频已准备就绪');
-            });
-            
-            bgmAudio.addEventListener('error', function(e) {
-                console.log('音频加载失败:', e);
-                bgmEnabled = false;
-                if (btnMusic) btnMusic.textContent = '🔇';
-            });
         }
     }
     
     function startBGM() {
         if (bgmAudio && bgmEnabled) {
-            // 移动端需要用户交互才能播放音频
-            const playPromise = bgmAudio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(e => {
-                    console.log('背景音乐播放失败:', e);
-                    // 移动端通常需要用户交互才能播放音频
-                    bgmEnabled = false;
-                    if (btnMusic) btnMusic.textContent = '🔇';
-                });
-            }
+            bgmAudio.play().catch(e => {
+                console.log('背景音乐播放失败:', e);
+                // 用户交互后重试
+                document.addEventListener('click', function retryBGM() {
+                    if (bgmAudio && bgmEnabled) {
+                        bgmAudio.play().catch(() => {});
+                    }
+                    document.removeEventListener('click', retryBGM);
+                }, { once: true });
+            });
         }
     }
     
@@ -213,10 +191,8 @@
         if (startOverlay) {
             startOverlay.style.display = 'none';
         }
-        // 在用户交互后尝试播放背景音乐
-        if (bgmEnabled) {
-            startBGM();
-        }
+        // 开始播放背景音乐
+        startBGM();
     }
     
     function resetGame() {
@@ -603,11 +579,11 @@
     // 输入处理
     function getPointer(e) {
         const rect = canvas.getBoundingClientRect();
-        const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
-        const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+        const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+        const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
         return {
-            x: (clientX - rect.left) * (logicalWidth / rect.width),
-            y: (clientY - rect.top) * (logicalHeight / rect.height)
+            x: (clientX - rect.left) * (canvas.width / rect.width),
+            y: (clientY - rect.top) * (canvas.height / rect.height)
         };
     }
 
@@ -871,35 +847,23 @@
     canvas.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
 
-    // 触摸事件处理
-    canvas.addEventListener('touchstart', function(e){ 
-        e.preventDefault(); 
-        onPointerDown(e); 
-    }, { passive: false });
-    
-    canvas.addEventListener('touchmove', function(e){ 
-        e.preventDefault(); 
-        onPointerMove(e); 
-    }, { passive: false });
-    
-    canvas.addEventListener('touchend', function(e){ 
-        e.preventDefault(); 
-        onPointerUp(e); 
-    }, { passive: false });
-    
-    // 防止页面滚动
-    document.addEventListener('touchmove', function(e) {
-        if (e.target === canvas) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+    canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onPointerDown(e); }, { passive: false });
+    canvas.addEventListener('touchmove', function(e){ e.preventDefault(); onPointerMove(e); }, { passive: false });
+    window.addEventListener('touchend', function(e){ e.preventDefault(); onPointerUp(e); }, { passive: false });
 
     btnRestart.addEventListener('click', resetGame);
     overlayRestart.addEventListener('click', resetGame);
     if (btnHint) btnHint.addEventListener('click', showHint);
     if (btnReshuffle) btnReshuffle.addEventListener('click', () => { reshuffle(); render(); });
     if (btnMusic) btnMusic.addEventListener('click', toggleBGM);
-    if (startGameBtn) startGameBtn.addEventListener('click', startGame);
+    if (startGameBtn) {
+        startGameBtn.addEventListener('click', startGame);
+        // 添加触摸事件支持
+        startGameBtn.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            startGame();
+        });
+    }
 
     // 粒子系统
     function spawnTrailParticles(x, y, color) {
@@ -1389,27 +1353,46 @@
         return 0;
     }
 
-    // 窗口大小变化时重新调整Canvas
-    window.addEventListener('resize', function() {
-        const newSize = resizeCanvas();
-        // 重新计算网格参数
-        const gridW = newSize.width - CELL_PADDING * 2;
-        const gridH = newSize.height - CELL_PADDING * 2;
-        const newCellSize = Math.min(Math.floor(gridW / BOARD_COLS), Math.floor(gridH / BOARD_ROWS));
-        const newOffsetX = Math.floor((newSize.width - newCellSize * BOARD_COLS) / 2);
-        const newOffsetY = Math.floor((newSize.height - newCellSize * BOARD_ROWS) / 2);
+    // 窗口大小变化时重新调整canvas
+    function handleResize() {
+        const isMobile = window.innerWidth <= 720;
+        const adjustedWidth = isMobile ? Math.min(logicalWidth, window.innerWidth - 20) : logicalWidth;
+        // 针对720*1280竖屏优化，确保8行网格能够完整显示
+        const adjustedHeight = isMobile ? Math.min(logicalHeight, window.innerHeight * 0.75) : logicalHeight;
         
-        // 更新全局变量
-        Object.assign(window, {
-            width: newSize.width,
-            height: newSize.height,
-            cellSize: newCellSize,
-            offsetX: newOffsetX,
-            offsetY: newOffsetY,
-            dotRadius: Math.floor(newCellSize * 0.28)
-        });
+        canvas.width = Math.round(adjustedWidth * dpr);
+        canvas.height = Math.round(adjustedHeight * dpr);
+        canvas.style.width = adjustedWidth + 'px';
+        canvas.style.height = adjustedHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+        // 重新计算网格参数
+        const newWidth = adjustedWidth;
+        const newHeight = adjustedHeight;
+        const newGridW = newWidth - CELL_PADDING * 2;
+        const newGridH = newHeight - CELL_PADDING * 2;
+        // 确保8行网格能够完整显示，调整cellSize计算
+        let newCellSize = Math.min(Math.floor(newGridW / BOARD_COLS), Math.floor(newGridH / BOARD_ROWS));
+        // 如果计算出的cellSize太小，使用最小尺寸
+        newCellSize = Math.max(newCellSize, 40); // 最小40px确保可见性
+        const newOffsetX = Math.floor((newWidth - newCellSize * BOARD_COLS) / 2);
+        const newOffsetY = Math.floor((newHeight - newCellSize * BOARD_ROWS) / 2);
+        
+        // 更新变量
+        width = newWidth;
+        height = newHeight;
+        cellSize = newCellSize;
+        offsetX = newOffsetX;
+        offsetY = newOffsetY;
+        dotRadius = Math.floor(newCellSize * 0.28);
         
         render();
+    }
+    
+    // 监听窗口大小变化
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', function() {
+        setTimeout(handleResize, 100);
     });
 
     // 启动

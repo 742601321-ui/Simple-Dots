@@ -1,11 +1,9 @@
 * { box-sizing: border-box; }
 html, body {
     height: 100%;
-    width: 100%;
 }
 body {
     margin: 0;
-    padding: 0;
     background: #0f1226;
     color: #fff;
     font-family: 'Nunito', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Microsoft Yahei', sans-serif;
@@ -13,13 +11,12 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    overflow-x: hidden;
+    padding: 10px;
 }
 
 .app {
     width: 100%;
     max-width: 420px;
-    padding: 0 10px;
     margin: 0 auto;
 }
 
@@ -53,7 +50,7 @@ body {
     position: relative;
     width: 100%;
     max-width: 400px;
-    height: 600px;
+    height: 640px;
     border-radius: 16px;
     overflow: hidden;
     background: linear-gradient(180deg, #15183a, #0f1226);
@@ -162,99 +159,19 @@ body {
 }
 .level-info strong { color: #FFD700; }
 
-/* 720*1280分辨率优化 */
-@media (max-width: 720px) and (max-height: 1280px), 
-       (max-width: 1280px) and (max-height: 720px) and (orientation: landscape) {
+/* 移动端优化 */
+@media screen and (max-width: 480px) {
+    body {
+        padding: 5px;
+    }
+    
     .app {
-        width: 100%;
-        max-width: 360px;
-        padding: 0 8px;
-        margin: 0 auto;
+        max-width: 100%;
     }
     
     .board-wrap {
-        width: 100%;
-        max-width: 360px;
-        height: 540px;
-        margin: 6px auto;
-    }
-    
-    .topbar, .bottombar {
-        padding: 6px 4px;
-        flex-wrap: wrap;
-        gap: 6px;
-    }
-    
-    .controls {
-        gap: 4px;
-    }
-    
-    .btn {
-        padding: 8px 10px;
-        font-size: 13px;
-        min-height: 40px;
-    }
-    
-    .score strong, .level strong {
-        font-size: 16px;
-    }
-    
-    .goals {
-        gap: 4px;
-        padding: 0 4px 4px;
-    }
-    
-    .goal-item {
-        padding: 3px 5px;
-    }
-    
-    .goal-dot {
-        width: 10px;
-        height: 10px;
-    }
-    
-    .goal-count {
-        font-size: 11px;
-    }
-    
-    .hint {
-        font-size: 10px;
-        margin-bottom: 4px;
-    }
-    
-    .level-info {
-        font-size: 10px;
-        gap: 10px;
-    }
-    
-    .start-modal {
-        padding: 25px 15px;
-        margin: 15px;
-        width: 95%;
-        max-width: 340px;
-    }
-    
-    .game-title {
-        font-size: 32px;
-        margin-bottom: 12px;
-    }
-    
-    .game-subtitle {
-        font-size: 13px;
-        margin-bottom: 20px;
-    }
-    
-    .btn-large {
-        padding: 12px 24px;
-        font-size: 15px;
-        min-width: 120px;
-    }
-}
-
-/* 移动端优化 */
-@media (max-width: 480px) {
-    .app {
-        padding: 0 5px;
+        height: 580px;
+        margin: 4px auto;
     }
     
     .topbar, .bottombar {
@@ -268,14 +185,29 @@ body {
     }
     
     .btn {
-        padding: 10px 12px;
-        font-size: 14px;
-        min-height: 44px; /* 确保触摸目标足够大 */
+        padding: 6px 10px;
+        font-size: 12px;
     }
     
-    .board-wrap {
-        height: 500px;
-        margin: 4px auto;
+    .btn-large {
+        padding: 14px 28px;
+        font-size: 16px;
+        min-width: 140px;
+    }
+    
+    .game-title {
+        font-size: 36px;
+        margin: 0 0 15px 0;
+    }
+    
+    .game-subtitle {
+        font-size: 14px;
+        margin: 0 0 25px 0;
+    }
+    
+    .start-modal {
+        padding: 30px 20px;
+        margin: 10px;
     }
     
     .goals {
@@ -296,10 +228,6 @@ body {
         font-size: 12px;
     }
     
-    .score strong, .level strong {
-        font-size: 18px;
-    }
-    
     .hint {
         font-size: 11px;
         margin-bottom: 6px;
@@ -309,26 +237,81 @@ body {
         font-size: 11px;
         gap: 12px;
     }
-    
-    .start-modal {
-        padding: 30px 20px;
-        margin: 20px;
+}
+
+/* 720x1280 竖屏特殊适配 */
+@media screen and (max-width: 720px) and (min-height: 1200px) {
+    body {
+        padding: 8px;
     }
     
-    .game-title {
-        font-size: 36px;
-        margin-bottom: 15px;
+    .app {
+        max-width: 100%;
     }
     
-    .game-subtitle {
-        font-size: 14px;
-        margin-bottom: 25px;
+    .board-wrap {
+        height: 700px;
+        max-width: 100%;
+        margin: 6px auto;
+    }
+    
+    .topbar, .bottombar {
+        padding: 10px 6px;
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 8px 12px;
+        font-size: 13px;
     }
     
     .btn-large {
-        padding: 14px 28px;
+        padding: 16px 32px;
+        font-size: 18px;
+        min-width: 160px;
+    }
+    
+    .game-title {
+        font-size: 44px;
+        margin: 0 0 20px 0;
+    }
+    
+    .game-subtitle {
         font-size: 16px;
-        min-width: 140px;
+        margin: 0 0 30px 0;
+    }
+    
+    .start-modal {
+        padding: 40px 30px;
+        margin: 15px;
+    }
+    
+    .goals {
+        gap: 8px;
+        padding: 0 6px 6px;
+    }
+    
+    .goal-item {
+        padding: 6px 8px;
+    }
+    
+    .goal-dot {
+        width: 14px;
+        height: 14px;
+    }
+    
+    .goal-count {
+        font-size: 13px;
+    }
+    
+    .hint {
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .level-info {
+        font-size: 12px;
+        gap: 16px;
     }
 }
 
